@@ -10,7 +10,7 @@ type btree struct {
 // node - Interface for node
 type node interface {
 	insertPair(value *pairs, bt *btree) error
-	deletePair(value *pairs, bt *btree) error
+	delete(key string, bt *btree) error
 	getValue(key string) (string, error)
 	printTree(level int)
 }
@@ -57,4 +57,9 @@ func (bt *btree) get(key string) (string, bool, error) {
 
 func (bt *btree) setRootNode(n node) {
 	bt.root = n
+}
+
+func (bt *btree) del(key string) error {
+	err := bt.root.delete(key, bt)
+	return err
 }

@@ -140,7 +140,7 @@ func TestDeleteSimple(t *testing.T) {
 	bt := createTestTree(t)
 
 	// Delete a key that doesn't require rebalancing
-	err := bt.root.deletePair(&pairs{key: "90"}, bt)
+	err := bt.root.delete("90", bt)
 	assert.NoError(t, err)
 
 	// Verify key is deleted
@@ -158,7 +158,7 @@ func TestDeleteKeyNotFound(t *testing.T) {
 	bt := createTestTree(t)
 
 	// Try to delete non-existent key
-	err := bt.root.deletePair(&pairs{key: "95"}, bt)
+	err := bt.root.delete("95", bt)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "key 95 not found")
 }
@@ -170,7 +170,7 @@ func TestDeleteRequiringBorrow(t *testing.T) {
 	// Delete keys to create an underflow situation
 	keysToDelete := []string{"20", "30"}
 	for _, key := range keysToDelete {
-		err := bt.root.deletePair(&pairs{key: key}, bt)
+		err := bt.root.delete(key, bt)
 		assert.NoError(t, err)
 	}
 
@@ -195,7 +195,7 @@ func TestDeleteRequiringMerge(t *testing.T) {
 	// Delete enough keys to force a merge operation
 	keysToDelete := []string{"20", "30", "40", "50"}
 	for _, key := range keysToDelete {
-		err := bt.root.deletePair(&pairs{key: key}, bt)
+		err := bt.root.delete(key, bt)
 		assert.NoError(t, err)
 	}
 
@@ -219,7 +219,7 @@ func TestDeleteAllElements(t *testing.T) {
 	// Delete all keys
 	allKeys := []string{"10", "20", "30", "40", "50", "60", "70", "80", "90"}
 	for _, key := range allKeys {
-		err := bt.root.deletePair(&pairs{key: key}, bt)
+		err := bt.root.delete(key, bt)
 		assert.NoError(t, err)
 	}
 
@@ -244,7 +244,7 @@ func TestDeleteWithRootChange(t *testing.T) {
 	// Delete enough keys to force root change
 	keysToDelete := []string{"20", "30", "40", "50", "60", "70", "80"}
 	for _, key := range keysToDelete {
-		err := bt.root.deletePair(&pairs{key: key}, bt)
+		err := bt.root.delete(key, bt)
 		assert.NoError(t, err)
 	}
 
@@ -273,7 +273,7 @@ func TestConcurrentDeletes(t *testing.T) {
 
 	for _, key := range keysToDelete {
 		go func(k string) {
-			err := bt.root.deletePair(&pairs{key: k}, bt)
+			err := bt.root.delete(k, bt)
 			if err != nil {
 				errChan <- err
 				return
