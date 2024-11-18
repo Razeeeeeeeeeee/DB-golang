@@ -1,7 +1,9 @@
 package db
 
-import "encoding/binary"
-import "fmt"
+import (
+	"encoding/binary"
+	"fmt"
+)
 
 // 2+2+30+90 = 127
 const pairSize = 124
@@ -26,6 +28,13 @@ func (p *pairs) setValue(value string) {
 }
 
 func (p *pairs) validate() error {
+
+	if p.key == "" {
+		return fmt.Errorf("Key should not be empty")
+	}
+	if p.value == "" {
+		return fmt.Errorf("Key should not be empty")
+	}
 	if len(p.key) > maxKeyLength {
 		return fmt.Errorf("key length should not be more than 30, currently it is %d ", len(p.key))
 	}
