@@ -1,6 +1,9 @@
 package db
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
 /**
 * Insertion Algorithm
@@ -46,6 +49,7 @@ type DiskNode struct {
 	childrenBlockIDs []uint64
 	blockID          uint64
 	blockService     *blockService
+	mu               sync.RWMutex
 }
 
 func (n *DiskNode) isLeaf() bool {
@@ -455,6 +459,9 @@ func (n *DiskNode) deletePair(value *pairs, bt *btree) error {
 
 func (n *DiskNode) delete(key string, bt *btree) error {
 	// First locate the leaf node containing the key
+	//
+	n.mu.Lock()
+	defer n.mu.Unlock()
 	if !n.isLeaf() {
 		childNode, err := n.getChildNodeForElement(key)
 		if err != nil {
