@@ -119,7 +119,7 @@ func handleconnection(conn net.Conn) {
 		case DELcommand:
 			err := db.Del(c.key)
 			if err != nil {
-				conn.Write([]byte("Error setting the value "))
+				conn.Write([]byte("Error setting the value\r\n"))
 			} else {
 				conn.Write([]byte("+OK\r\n"))
 			}
