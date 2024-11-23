@@ -459,7 +459,6 @@ func (n *DiskNode) deletePair(value *pairs, bt *btree) error {
 
 func (n *DiskNode) delete(key string, bt *btree) error {
 	// First locate the leaf node containing the key
-	//
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	if !n.isLeaf() {

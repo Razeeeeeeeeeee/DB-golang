@@ -7,7 +7,7 @@ import (
 
 func TestDBOperations(t *testing.T) {
 	// Create a temporary file path for testing
-	testFilePath := "/tmp/testdb"
+	testFilePath := "./db/test2.db"
 	defer os.Remove(testFilePath)
 
 	// Test Open
