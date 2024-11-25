@@ -32,9 +32,9 @@ type DELcommand struct {
 
 func parseCommand(msg string) (command, error) {
 	rd := resp.NewReader(bytes.NewBufferString(msg))
-
 	for {
 		v, _, err := rd.ReadValue()
+		// fmt.Print(v)
 		if err == io.EOF {
 			break
 		}

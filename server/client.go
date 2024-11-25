@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	port        = 6789
+	port        = 6379
 	receiveBufs = 1024
 )
 
@@ -52,6 +52,17 @@ func client(ctx context.Context, port int) error {
 		os.Exit(1)
 	}
 	defer l.Close()
+
+	// Channel to signal listener closure
+	done := make(chan struct{})
+
+	// Gracefully handle context cancellation
+	go func() {
+		<-ctx.Done()
+		fmt.Println("Context canceled, closing listener...")
+		l.Close() // Close the listener to unblock Accept()
+		close(done)
+	}()
 
 	for {
 		select {
@@ -124,7 +135,8 @@ func handleconnection(conn net.Conn) {
 				conn.Write([]byte("+OK\r\n"))
 			}
 		default:
-			panic("not a valid command")
+			// fmt.Print(comms)
+			// panic("not a valid command")
 		}
 
 	}
