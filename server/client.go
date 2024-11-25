@@ -135,7 +135,7 @@ func handleconnection(conn net.Conn) {
 				conn.Write([]byte("+OK\r\n"))
 			}
 		default:
-			// fmt.Print(comms)
+			fmt.Print("not a valid command")
 			// panic("not a valid command")
 		}
 

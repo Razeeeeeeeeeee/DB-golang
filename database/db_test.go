@@ -15,7 +15,7 @@ func TestDBOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
 	}
-	defer db.Close()
+	defer db.Close(testFilePath)
 
 	// Test Put
 	testKey := "testKey"
@@ -59,7 +59,7 @@ func TestPutValidation(t *testing.T) {
 		t.Fatalf("Failed to open database: %v", err)
 	}
 	defer os.Remove("/tmp/validationdb")
-	defer db.Close()
+	defer db.Close("/tmp/validationdb")
 
 	// Test empty key
 	err = db.Put("", "value")
@@ -80,7 +80,7 @@ func TestConcurrency(t *testing.T) {
 		t.Fatalf("Failed to open database: %v", err)
 	}
 	defer os.Remove("/tmp/concurrencydb")
-	defer db.Close()
+	defer db.Close("/tmp/concurrencydb")
 
 	// Concurrent writes
 	done := make(chan bool)

@@ -1,6 +1,12 @@
 package db
 
-import "sync"
+import (
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"sync"
+)
 
 // DB - Handle exported by the package
 type DB struct {
@@ -20,6 +26,15 @@ func Open(filePath string) (*DB, error) {
 	dbConnections.mu.Lock()
 	defer dbConnections.mu.Unlock()
 
+	dir := filepath.Dir(filePath)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		// Create the directory if it doesn't exist
+		err := os.MkdirAll(dir, os.ModePerm)
+		if err != nil {
+			fmt.Printf("Error creating directory: %v\n", err)
+		}
+		fmt.Printf("Directory created: %s\n", dir)
+	}
 	// Return existing connection if it exists
 	if db, exists := dbConnections.instances[filePath]; exists {
 		return db, nil
@@ -62,8 +77,17 @@ func (db *DB) Del(key string) error {
 	return db.storage.del(key)
 }
 
-func (db *DB) Close() error {
+func (db *DB) Close(filePath string) error {
+	dbConnections.mu.Lock()
+	defer dbConnections.mu.Unlock()
+
+	if db.storage == nil {
+		return errors.New("database already closed")
+	}
+
 	db.mu.Lock()
 	defer db.mu.Unlock()
+	delete(dbConnections.instances, filePath)
+	db.storage = nil // Mark the storage as closed
 	return nil
 }
