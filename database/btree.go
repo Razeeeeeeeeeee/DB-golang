@@ -11,32 +11,32 @@ type btree struct {
 // node defines the interface that all nodes (e.g., leaf and internal) must implement.
 // It provides methods for inserting, deleting, retrieving, and printing elements in the tree.
 type node interface {
-	// insertPair inserts a key-value pair into the node.
+	// InsertPair inserts a key-value pair into the node.
 	// The node may split if it exceeds its capacity, and the split may propagate upwards.
 	// Parameters:
 	// - value: A pointer to the key-value pair to be inserted.
 	// - bt: A reference to the B-tree to which the node belongs.
 	// Returns: An error if the insertion fails.
-	insertPair(value *pairs, bt *btree) error
+	InsertPair(value *pairs, bt *btree) error
 
-	// delete removes a key-value pair from the node.
+	// Delete removes a key-value pair from the node.
 	// The node may merge with its siblings if it becomes underfilled, and the merge may propagate upwards.
 	// Parameters:
-	// - key: The key to be deleted from the node.
+	// - key: The key to be Deleted from the node.
 	// - bt: A reference to the B-tree to which the node belongs.
 	// Returns: An error if the deletion fails.
-	delete(key string, bt *btree) error
+	Delete(key string, bt *btree) error
 
-	// getValue retrieves the value associated with a key in the node.
+	// GetValue retrieves the value associated with a key in the node.
 	// Parameters:
 	// - key: The key to search for in the node.
 	// Returns: The value associated with the key, and an error if the key is not found.
-	getValue(key string) (string, error)
+	GetValue(key string) (string, error)
 
-	// printTree prints the structure of the node and its descendants.
+	// PrintTree prints the structure of the node and its descendants.
 	// Parameters:
 	// - level: The depth level of the node in the tree (used for indentation).
-	printTree(level int)
+	PrintTree(level int)
 }
 
 // isRootNode checks if a given node is the root node of the B-tree.
@@ -62,7 +62,7 @@ func initializeBtree(path ...string) (*btree, error) {
 	if err != nil {
 		return nil, err
 	}
-	dns := newDiskNodeService(file)
+	dns := NewDiskNodeService(file)
 
 	root, err := dns.getRootNodeFromDisk()
 	if err != nil {
@@ -77,7 +77,7 @@ func initializeBtree(path ...string) (*btree, error) {
 // - value: A pointer to the key-value pair to be inserted.
 // Returns: An error if the insertion fails.
 func (bt *btree) insert(value *pairs) error {
-	return bt.root.insertPair(value, bt)
+	return bt.root.InsertPair(value, bt)
 }
 
 // get retrieves the value associated with a key in the B-tree.
@@ -86,7 +86,7 @@ func (bt *btree) insert(value *pairs) error {
 // - key: The key to search for in the B-tree.
 // Returns: The value associated with the key, a boolean indicating if the key was found, and an error if the operation fails.
 func (bt *btree) get(key string) (string, bool, error) {
-	value, err := bt.root.getValue(key)
+	value, err := bt.root.GetValue(key)
 	if err != nil {
 		return "", false, err
 	}
@@ -104,12 +104,12 @@ func (bt *btree) setRootNode(n node) {
 	bt.root = n
 }
 
-// del deletes a key-value pair from the B-tree.
+// del Deletes a key-value pair from the B-tree.
 // The deletion is delegated to the root node, and the root may merge if necessary.
 // Parameters:
-// - key: The key to be deleted from the B-tree.
+// - key: The key to be Deleted from the B-tree.
 // Returns: An error if the deletion fails.
 func (bt *btree) del(key string) error {
-	err := bt.root.delete(key, bt)
+	err := bt.root.Delete(key, bt)
 	return err
 }

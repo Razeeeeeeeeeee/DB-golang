@@ -7,7 +7,7 @@ import (
 
 func TestSETProtocol(t *testing.T) {
 	raw := "*3\r\n$3\r\nSET\r\n$3\r\nfoo\r\n$3\r\nbar\r\n"
-	cmd, err := parseCommand(raw)
+	cmd, err := ParseCommand(raw)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,7 +22,7 @@ func TestSETProtocol(t *testing.T) {
 
 func TestGETProtocol(t *testing.T) {
 	raw := "*2\r\n$3\r\nGET\r\n$3\r\nfoo\r\n"
-	cmd, err := parseCommand(raw)
+	cmd, err := ParseCommand(raw)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +37,7 @@ func TestGETProtocol(t *testing.T) {
 
 func TestDELProtocol(t *testing.T) {
 	raw := "*2\r\n$3\r\nDEL\r\n$3\r\nfoo\r\n"
-	cmd, err := parseCommand(raw)
+	cmd, err := ParseCommand(raw)
 	if err != nil {
 		t.Fatal(err)
 	}
