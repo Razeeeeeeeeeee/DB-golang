@@ -43,20 +43,26 @@ import (
 
 */
 
-// DiskNode - In memory node implementation
+// DiskNode represents an in-memory node in the B-tree.
 type DiskNode struct {
-	keys             []*pairs
+	// keys stores the key-value pairs in the node.
+	keys []*pairs
+	// childrenBlockIDs stores the block IDs of child nodes.
 	childrenBlockIDs []uint64
-	blockID          uint64
-	blockService     *blockService
-	mu               sync.RWMutex
+	// blockID is the block ID of the current node.
+	blockID uint64
+	// blockService provides an interface to interact with the block storage.
+	blockService *blockService
+	// mu is a read-write mutex for synchronizing access to the node.
+	mu sync.RWMutex
 }
 
+// isLeaf checks if the current node is a leaf node.
 func (n *DiskNode) isLeaf() bool {
 	return len(n.childrenBlockIDs) == 0
 }
 
-// PrintTree - Traverse and print the entire tree
+// PrintTree traverses and prints the entire tree rooted at the current node.
 func (n *DiskNode) printTree(level int) {
 	currentLevel := level
 	if level == 0 {
@@ -76,7 +82,8 @@ func (n *DiskNode) printTree(level int) {
 
 /**
 * Do a linear search and insert the element
- */
+ **/
+// addElement inserts an element into the node's key array while maintaining sorted order.
 func (n *DiskNode) addElement(element *pairs) int {
 	elements := n.getElements()
 	indexForInsertion := 0
@@ -103,26 +110,32 @@ func (n *DiskNode) addElement(element *pairs) int {
 	return indexForInsertion
 }
 
+// hasOverFlown checks if the node has exceeded its maximum capacity.
 func (n *DiskNode) hasOverFlown() bool {
 	return len(n.getElements()) > n.blockService.getMaxLeafSize()
 }
 
+// getElements returns the key-value pairs stored in the node.
 func (n *DiskNode) getElements() []*pairs {
 	return n.keys
 }
 
+// setElements updates the key-value pairs stored in the node.
 func (n *DiskNode) setElements(newElements []*pairs) {
 	n.keys = newElements
 }
 
+// getElementAtIndex returns the key-value pair at the specified index.
 func (n *DiskNode) getElementAtIndex(index int) *pairs {
 	return n.keys[index]
 }
 
+// getChildAtIndex returns the child node at the specified index.
 func (n *DiskNode) getChildAtIndex(index int) (*DiskNode, error) {
 	return n.blockService.getNodeAtBlockID(n.childrenBlockIDs[index])
 }
 
+// shiftRemainingChildrenToRight shifts the child nodes to the right starting from the specified index.
 func (n *DiskNode) shiftRemainingChildrenToRight(index int) {
 	if len(n.childrenBlockIDs) < index+1 {
 		// This means index is the last element, hence no need to shift
@@ -132,6 +145,8 @@ func (n *DiskNode) shiftRemainingChildrenToRight(index int) {
 	copy(n.childrenBlockIDs[index+1:], n.childrenBlockIDs[index:])
 	n.childrenBlockIDs[index] = 0
 }
+
+// setChildAtIndex updates the child node at the specified index.
 func (n *DiskNode) setChildAtIndex(index int, childNode *DiskNode) {
 	if len(n.childrenBlockIDs) < index+1 {
 		n.childrenBlockIDs = append(n.childrenBlockIDs, 0)
@@ -139,10 +154,12 @@ func (n *DiskNode) setChildAtIndex(index int, childNode *DiskNode) {
 	n.childrenBlockIDs[index] = childNode.blockID
 }
 
+// getLastChildNode returns the last child node.
 func (n *DiskNode) getLastChildNode() (*DiskNode, error) {
 	return n.getChildAtIndex(len(n.childrenBlockIDs) - 1)
 }
 
+// getChildNodes returns all child nodes.
 func (n *DiskNode) getChildNodes() ([]*DiskNode, error) {
 	childNodes := make([]*DiskNode, len(n.childrenBlockIDs))
 	for index := range n.childrenBlockIDs {
@@ -168,7 +185,7 @@ func (n *DiskNode) printNode() {
 	fmt.Println("**********************")
 }
 
-// splitLeafNode - Split leaf node
+// splitLeafNode splits a leaf node into two child nodes when it overflows.
 func (n *DiskNode) splitLeafNode() (*pairs, *DiskNode, *DiskNode, error) {
 	/**
 		LEAF SPLITTING WITHOUT CHILDREN ALGORITHM
@@ -199,7 +216,7 @@ func (n *DiskNode) splitLeafNode() (*pairs, *DiskNode, *DiskNode, error) {
 	return middle, leftNode, rightNode, nil
 }
 
-// splitNonLeafNode - Split non leaf node
+// splitNonLeafNode splits a non-leaf node into two child nodes when it overflows.
 func (n *DiskNode) splitNonLeafNode() (*pairs, *DiskNode, *DiskNode, error) {
 	/**
 		NON-LEAF NODE SPLITTING ALGORITHM WITH CHILDREN MANIPULATION
@@ -239,8 +256,7 @@ func (n *DiskNode) splitNonLeafNode() (*pairs, *DiskNode, *DiskNode, error) {
 	return middle, leftNode, rightNode, nil
 }
 
-// addPoppedUpElementIntoCurrentNodeAndUpdateWithNewChildren - Insert element received as a reaction
-// from insert operation at child nodes
+// addPoppedUpElementIntoCurrentNodeAndUpdateWithNewChildren inserts a popped-up element into the current node.
 func (n *DiskNode) addPoppedUpElementIntoCurrentNodeAndUpdateWithNewChildren(element *pairs, leftNode *DiskNode, rightNode *DiskNode) {
 	/**
 		POPPED UP JOINING ALGORITHM
@@ -259,7 +275,7 @@ func (n *DiskNode) addPoppedUpElementIntoCurrentNodeAndUpdateWithNewChildren(ele
 	n.setChildAtIndex(insertionIndex+1, rightNode)
 }
 
-// newLeafNode - Create a new leaf node without children
+// newLeafNode creates a new leaf node without children.
 func newLeafNode(elements []*pairs, bs *blockService) (*DiskNode, error) {
 	node := &DiskNode{keys: elements, blockService: bs}
 	//persist the node to disk
@@ -270,7 +286,7 @@ func newLeafNode(elements []*pairs, bs *blockService) (*DiskNode, error) {
 	return node, nil
 }
 
-// newNodeWithChildren - Create a non leaf node with children
+// newNodeWithChildren creates a new non-leaf node with children.
 func newNodeWithChildren(elements []*pairs, childrenBlockIDs []uint64, bs *blockService) (*DiskNode, error) {
 	node := &DiskNode{keys: elements, childrenBlockIDs: childrenBlockIDs, blockService: bs}
 	//persist this node to disk
@@ -281,7 +297,7 @@ func newNodeWithChildren(elements []*pairs, childrenBlockIDs []uint64, bs *block
 	return node, nil
 }
 
-// newRootNodeWithSingleElementAndTwoChildren - Create a new root node
+// newRootNodeWithSingleElementAndTwoChildren creates a new root node with a single element and two children.
 func newRootNodeWithSingleElementAndTwoChildren(element *pairs, leftChildBlockID uint64,
 	rightChildBlockID uint64, bs *blockService) (*DiskNode, error) {
 	elements := []*pairs{element}
@@ -314,6 +330,7 @@ func (n *DiskNode) getChildNodeForElement(key string) (*DiskNode, error) {
 	return n.getLastChildNode()
 }
 
+// insert inserts a key-value pair into the B-tree.
 func (n *DiskNode) insert(value *pairs, bt *btree) (*pairs, *DiskNode, *DiskNode, error) {
 	if n.isLeaf() {
 		n.addElement(value)
@@ -401,6 +418,7 @@ func (n *DiskNode) insert(value *pairs, bt *btree) (*pairs, *DiskNode, *DiskNode
 	return nil, nil, nil, nil
 }
 
+// searchElementInNode searches for an element within the current node.
 func (n *DiskNode) searchElementInNode(key string) (string, bool) {
 	elements := n.getElements()
 	low, high := 0, len(elements)-1
@@ -419,6 +437,8 @@ func (n *DiskNode) searchElementInNode(key string) (string, bool) {
 	}
 	return "", false
 }
+
+// search searches for a key in the B-tree.
 func (n *DiskNode) search(key string) (string, error) {
 	/*
 		Algo:
@@ -443,7 +463,7 @@ func (n *DiskNode) search(key string) (string, error) {
 	return node.search(key)
 }
 
-// Insert - Insert value into Node
+// InsertPair inserts a key-value pair into the B-tree.
 func (n *DiskNode) insertPair(value *pairs, bt *btree) error {
 	_, _, _, err := n.insert(value, bt)
 	if err != nil {
@@ -452,11 +472,12 @@ func (n *DiskNode) insertPair(value *pairs, bt *btree) error {
 	return nil
 }
 
-// Delete - Delete key in the node
+// DeletePair deletes a key-value pair from the B-tree.
 func (n *DiskNode) deletePair(value *pairs, bt *btree) error {
 	return n.delete(value.key, bt)
 }
 
+// delete deletes a key from the B-tree.
 func (n *DiskNode) delete(key string, bt *btree) error {
 	// First locate the leaf node containing the key
 	n.mu.Lock()
@@ -500,10 +521,13 @@ func (n *DiskNode) delete(key string, bt *btree) error {
 // findParentInfo returns the parent node, index of the current node in parent's children,
 // and any error that occurred
 type parentInfo struct {
+	// parent is the parent node.
 	parent *DiskNode
-	index  int
+	// index is the index of the current node in the parent's children.
+	index int
 }
 
+// findParentInfo returns the parent node information for the current node.
 func (n *DiskNode) findParentInfo(current node) (*parentInfo, error) {
 	// Type assert to check if current node is a DiskNode
 	diskNode, ok := current.(*DiskNode)
@@ -538,6 +562,7 @@ func (n *DiskNode) findParentInfo(current node) (*parentInfo, error) {
 	return nil, nil
 }
 
+// handleUnderflow handles node underflow by borrowing or merging with sibling nodes.
 func (n *DiskNode) handleUnderflow(bt *btree) error {
 	// Find parent information
 	parentInfo, err := n.findParentInfo(bt.root)
@@ -593,6 +618,7 @@ func (n *DiskNode) handleUnderflow(bt *btree) error {
 	return n.mergeWithRight(rightSibling, parent, parentIndex, bt)
 }
 
+// borrowFromLeft borrows an element from the left sibling node.
 func (n *DiskNode) borrowFromLeft(leftSibling *DiskNode, parent *DiskNode, parentIndex int) error {
 	// Move the rightmost element from left sibling to current node
 	elements := leftSibling.getElements()
@@ -615,6 +641,7 @@ func (n *DiskNode) borrowFromLeft(leftSibling *DiskNode, parent *DiskNode, paren
 	return parent.blockService.updateNodeToDisk(parent)
 }
 
+// borrowFromRight borrows an element from the right sibling node.
 func (n *DiskNode) borrowFromRight(rightSibling *DiskNode, parent *DiskNode, parentIndex int) error {
 	// Move the leftmost element from right sibling to current node
 	elements := rightSibling.getElements()
@@ -637,6 +664,7 @@ func (n *DiskNode) borrowFromRight(rightSibling *DiskNode, parent *DiskNode, par
 	return parent.blockService.updateNodeToDisk(parent)
 }
 
+// mergeWithLeft merges the current node with the left sibling node.
 func (n *DiskNode) mergeWithLeft(leftSibling *DiskNode, parent *DiskNode, parentIndex int, bt *btree) error {
 	// Merge current node's elements into left sibling
 	leftSibling.setElements(append(leftSibling.getElements(), n.getElements()...))
@@ -657,6 +685,7 @@ func (n *DiskNode) mergeWithLeft(leftSibling *DiskNode, parent *DiskNode, parent
 	return parent.blockService.updateNodeToDisk(parent)
 }
 
+// mergeWithRight merges the current node with the right sibling node.
 func (n *DiskNode) mergeWithRight(rightSibling *DiskNode, parent *DiskNode, parentIndex int, bt *btree) error {
 	// Merge right sibling's elements into current node
 	n.setElements(append(n.getElements(), rightSibling.getElements()...))
@@ -677,6 +706,7 @@ func (n *DiskNode) mergeWithRight(rightSibling *DiskNode, parent *DiskNode, pare
 	return parent.blockService.updateNodeToDisk(parent)
 }
 
+// getValue returns the value associated with the given key.
 func (n *DiskNode) getValue(key string) (string, error) {
 	return n.search(key)
 }
