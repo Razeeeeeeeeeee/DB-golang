@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	fmt.Printf("Server running on port: %d \n", server.Port)
+	fmt.Printf("Server created and running on port: %d \n", server.Port)
 	fmt.Println("Supports SET, DEL and GET commands")
 	server.Createclient()
 }
