@@ -19,13 +19,13 @@ import (
 )
 
 const (
-	port        = 6379
+	Port        = 6379
 	receiveBufs = 1024
 )
 
 var wg sync.WaitGroup
 
-func createclient() {
+func Createclient() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -37,7 +37,7 @@ func createclient() {
 		cancel()
 	}()
 
-	if err := client(ctx, port); err != nil {
+	if err := Client(ctx, Port); err != nil {
 		fmt.Println("Server error:", err)
 	}
 
@@ -45,10 +45,10 @@ func createclient() {
 	fmt.Println("All connections handled. Exiting.")
 }
 
-func client(ctx context.Context, port int) error {
-	l, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", port))
+func Client(ctx context.Context, Port int) error {
+	l, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", Port))
 	if err != nil {
-		slog.Error("Failed to bind to port")
+		slog.Error("Failed to bind to Port")
 		os.Exit(1)
 	}
 	defer l.Close()
@@ -76,12 +76,12 @@ func client(ctx context.Context, port int) error {
 				os.Exit(1)
 			}
 			wg.Add(1)
-			go handleconnection(conn)
+			go Handleconnection(conn)
 		}
 	}
 }
 
-func handleconnection(conn net.Conn) {
+func Handleconnection(conn net.Conn) {
 
 	defer wg.Done()
 	defer conn.Close()
@@ -98,7 +98,7 @@ func handleconnection(conn net.Conn) {
 			}
 			return
 		}
-		comms := parseClientCommand(string(buf[:dlen-2]))
+		comms := ParseClientCommand(string(buf[:dlen-2]))
 		commands, err := parseCommand(comms)
 		// fmt.Print(commands)
 
@@ -142,16 +142,16 @@ func handleconnection(conn net.Conn) {
 	}
 }
 
-func parseClientCommand(msg string) string {
+func ParseClientCommand(msg string) string {
 	commands := strings.Split(msg, " ")
 	var buf bytes.Buffer
 	wr := resp.NewWriter(&buf)
-	_ = writeRespArray(wr, commands)
+	_ = WriteRespArray(wr, commands)
 	// print(buf.String())
 	return buf.String()
 }
 
-func writeRespArray(wr *resp.Writer, msgs []string) error {
+func WriteRespArray(wr *resp.Writer, msgs []string) error {
 	values := make([]resp.Value, len(msgs))
 
 	for i, str := range msgs {

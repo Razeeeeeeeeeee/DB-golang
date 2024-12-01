@@ -9,5 +9,5 @@ import (
 // }
 
 func TestCreateclient(t *testing.T) {
-	createclient()
+	Createclient()
 }
